@@ -66,10 +66,10 @@ const T = {
 /** 估算文字宽度（CJK≈1em，ASCII≈0.55em），把主标题折成均衡的两行，避免孤字 */
 function splitMain(main: string, fontSize: number, maxWidth: number): string[] {
   const chars = Array.from(main);
-  const units = chars.map((ch) => (/[^\x00-\xff]/.test(ch) ? 1 : 0.55));
+  const units = chars.map((ch) => (/[^\x00-\xff]/.test(ch) ? 1 : 0.6));
   const total = units.reduce((a, b) => a + b, 0);
   const perLine = maxWidth / fontSize;
-  if (total <= perLine * 1.05) return [main];
+  if (total <= perLine) return [main];
   let acc = 0;
   let best = 1;
   let bestDiff = Infinity;
