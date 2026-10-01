@@ -18,7 +18,7 @@
 
 ## 功能
 
-- **双通道输入**：粘贴文本，或输入网页链接由服务端抓取正文（桌面 UA + Readability 提取，带 SSRF 防护）
+- **三通道输入**：粘贴文本；输入网页链接由服务端抓取正文（桌面 UA + Readability 提取，带 SSRF 防护）；输入 **B 站 / YouTube / 音视频直链**由服务端提取音频并 ASR 转写为文字稿（yt-dlp + ffmpeg，90 分钟内，超长自动切片转写后拼接）
 - **内容理解**：LLM 结构化输出总结 / 要点 / 目标读者 / 调性 / 金句，全部可编辑、可重新生成
 - **平台改写（并行、互不影响，5 个平台可勾选）**：
   - 小红书：3-8 个 ≤20 字标题候选、emoji 分段口语化正文（≤800 字）、5-10 个话题标签、封面文案
@@ -78,8 +78,24 @@ GLM_API_KEY=你的智谱密钥        # glm-4-flash 目前免费；也可用其�
 | `POST` | `/api/ingest` | `{url}` → 抓取并提取 `{title, content, excerpt, sourceUrl}` |
 | `POST` | `/api/understand` | `{title, content}` → 结构化理解 + token usage |
 | `POST` | `/api/adapt` | `{title, content, analysis, platforms[]}` → 并行产出各平台草稿，分平台成功/失败 |
+| `POST` | `/api/transcribe` | `{url}` → 提取音频并 ASR 转写 → `{title, content, excerpt, sourceUrl, duration}` |
 | `POST` | `/api/cover` | `{template, main, sub}` → `image/png` 封面（900×1200） |
 | `GET` | `/api/config` | 服务端预设与密钥配置状态（不含密钥） |
+
+## 视频 / 播客输入（M4）
+
+支持 **B 站、YouTube** 链接（平台白名单，可用 `MEDIA_EXTRA_HOSTS` 追加），或直接粘贴 `.mp3/.m4a/.wav/.flac/.aac/.ogg/.opus/.mp4/.m4v/.mkv/.webm/.mov/.avi/.flv` 等音视频直链。流程：服务端用 yt-dlp 提取音频（直链直接下载）→ ffmpeg 统一转 16kHz 单声道 mp3 64kbps（约 0.48MB/分钟）→ 超过 ASR 单片上限自动按时长切片 → 逐片转写后拼接 → 文字稿进入现有流水线。
+
+**ASR 配置**（OpenAI 兼容抽象，默认阿里云百炼）：
+
+| 环境变量 | 说明 |
+|---|---|
+| `ASR_PROVIDER` | `dashscope`（默认，qwen3-asr-flash）/ `groq` / `openai`；自定义服务填全下面三项 |
+| `ASR_BASE_URL` / `ASR_API_KEY` / `ASR_MODEL` | 自定义 OpenAI 兼容转写端点（如自建 Whisper）；`ASR_PROVIDER=dashscope` 时按 qwen-asr 协议请求 |
+
+百炼密钥在 https://bailian.console.aliyun.com/ 获取（新用户有免费额度），填入 `DASHSCOPE_API_KEY` 即可（dashscope 预设与文本模型共用该密钥）。注意：DashScope 兼容模式的 ASR 只支持 qwen3-asr-flash 系列且不收本地文件路径，本项目按其官方文档用 base64 Data URL 上传，单片超过 4 分钟会自动切片。
+
+**二进制依赖**：`ffmpeg-static` 与 `yt-dlp-exec` 会在 npm install 时自动下载对应二进制（GitHub Releases）。网络受限时可用镜像重装：`FFMPEG_BINARIES_URL=https://registry.npmmirror.com/-/binary/ffmpeg-static npm install ffmpeg-static`；yt-dlp 可经 `https://ghfast.top/https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe` 手动下载到 `node_modules/yt-dlp-exec/bin/`。若两者都失败，手动放置 `ffmpeg(.exe)`、`yt-dlp(.exe)` 到 `assets/bin/`，或用 `FFMPEG_PATH` / `YTDLP_PATH` 环境变量指定路径（代码按此顺序自动探测）。
 
 ## Roadmap
 
@@ -88,7 +104,7 @@ GLM_API_KEY=你的智谱密钥        # glm-4-flash 目前免费；也可用其�
 - **M1**：文本/链接输入 → 内容理解 → 小红书 + 公众号草稿 → 模板封面 → 编辑导出 ✅
 - **M2**：在线 Demo（Vercel）+ BYOK + 限流完善 + README 演示 GIF
 - **M3**：知乎 / 微博 / 头条三平台适配，五平台并行输出 ✅（单平台失败不影响整体）
-- **M4**：B 站 / 播客链接 → 转写 → 流水线（自托管 Docker）
+- **M4**：B 站 / YouTube / 播客链接 → 提取音频 → ASR 转写 → 流水线 ✅（自托管场景）
 - **M5**：发布推广与 dogfooding 闭环
 
 ## 合规与声明
@@ -96,6 +112,7 @@ GLM_API_KEY=你的智谱密钥        # glm-4-flash 目前免费；也可用其�
 - 本项目**不接入任何平台的自动发布 API**，产出物均为草稿，请人工审核后再发布
 - 请遵守各平台「AI 辅助创作」内容标识要求
 - 网页抓取内容仅供你本人二次创作使用，请尊重原作者版权
+- 视频/播客转写仅供用户本人二次创作使用，请尊重原作者版权；受版权保护的内容请勿违规转载
 
 ## License
 

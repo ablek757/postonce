@@ -48,7 +48,7 @@ function isPrivateIP(ip: string): boolean {
   return isPrivateIPv4(ip);
 }
 
-async function assertUrlAllowed(rawUrl: string): Promise<URL> {
+export async function assertUrlAllowed(rawUrl: string): Promise<URL> {
   let url: URL;
   try {
     url = new URL(rawUrl);

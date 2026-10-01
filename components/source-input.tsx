@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { apiPost, type IngestResponse } from "@/lib/client";
+import { apiPost, type IngestResponse, type TranscribeResponse } from "@/lib/client";
 import type { SourceDocument } from "@/lib/types";
-import { FileText, Link2, Loader2, Sparkles } from "lucide-react";
+import { Clapperboard, FileText, Link2, Loader2, Sparkles } from "lucide-react";
 
 interface Props {
   initialDoc?: SourceDocument | null;
@@ -23,7 +23,9 @@ export function SourceInput({ initialDoc, onReady, onUnderstand, ready, busy }: 
   const [title, setTitle] = useState(initialDoc?.title ?? "");
   const [content, setContent] = useState(initialDoc?.content ?? "");
   const [url, setUrl] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
   const [fetching, setFetching] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const textReady = content.trim().length >= 10;
@@ -57,6 +59,29 @@ export function SourceInput({ initialDoc, onReady, onUnderstand, ready, busy }: 
     }
   }
 
+  async function handleTranscribe() {
+    const target = mediaUrl.trim();
+    if (!target) {
+      setError("请先输入视频/播客链接");
+      return;
+    }
+    setError(null);
+    setTranscribing(true);
+    try {
+      const res = await apiPost<TranscribeResponse>("/api/transcribe", { url: target });
+      emit({
+        title: res.title || "",
+        content: res.content,
+        excerpt: res.excerpt,
+        sourceUrl: res.sourceUrl,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "转写失败");
+    } finally {
+      setTranscribing(false);
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -68,12 +93,15 @@ export function SourceInput({ initialDoc, onReady, onUnderstand, ready, busy }: 
       </CardHeader>
       <CardContent className="space-y-4">
         <Tabs defaultValue="text">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="text">
               <FileText className="mr-1.5 size-4" /> 粘贴文本
             </TabsTrigger>
             <TabsTrigger value="url">
               <Link2 className="mr-1.5 size-4" /> 网页链接
+            </TabsTrigger>
+            <TabsTrigger value="media">
+              <Clapperboard className="mr-1.5 size-4" /> 视频/播客
             </TabsTrigger>
           </TabsList>
 
@@ -157,6 +185,63 @@ export function SourceInput({ initialDoc, onReady, onUnderstand, ready, busy }: 
                   <Label htmlFor="fetched-content">抓取到的正文（可修改）</Label>
                   <Textarea
                     id="fetched-content"
+                    className="min-h-40 resize-y"
+                    value={content}
+                    onChange={(e) => {
+                      setContent(e.target.value);
+                      onReady({ title, content: e.target.value, excerpt: "" });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground text-right">{content.length} 字</p>
+                </div>
+                <Button className="w-full sm:w-auto" disabled={!textReady || busy} onClick={() => onUnderstand()}>
+                  {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}
+                  开始理解
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-3 pt-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="src-media">视频 / 播客链接</Label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  id="src-media"
+                  placeholder="https://www.bilibili.com/video/BV… 或 .mp3/.m4a 直链"
+                  value={mediaUrl}
+                  onChange={(e) => setMediaUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleTranscribe();
+                  }}
+                />
+                <Button variant="secondary" onClick={handleTranscribe} disabled={transcribing} className="sm:w-32">
+                  {transcribing ? <Loader2 className="size-4 animate-spin" /> : "提取文字稿"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                支持 B 站、YouTube 及常见音视频直链；服务端提取音频并转写为文字稿。
+                {transcribing && <span className="mt-1 block font-medium text-foreground">转写中，长视频可能需要几分钟，请勿关闭页面…</span>}
+              </p>
+            </div>
+
+            {ready && (
+              <div className="space-y-3 rounded-lg border bg-muted/40 p-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="media-title">转写标题（可修改）</Label>
+                  <Input
+                    id="media-title"
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      onReady({ title: e.target.value, content, excerpt: "" });
+                    }}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="media-content">转写文字稿（可修改）</Label>
+                  <Textarea
+                    id="media-content"
                     className="min-h-40 resize-y"
                     value={content}
                     onChange={(e) => {

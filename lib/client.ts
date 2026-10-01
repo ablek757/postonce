@@ -230,6 +230,10 @@ export function htmlToMarkdown(html: string): string {
 
 export interface IngestResponse extends SourceDocument {}
 
+export interface TranscribeResponse extends SourceDocument {
+  duration: number;
+}
+
 export type UnderstandResponse = ContentAnalysis & { usage: TokenUsage };
 
 export interface AdaptResponse {
