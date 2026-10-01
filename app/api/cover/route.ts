@@ -4,6 +4,9 @@ import { renderCoverPng } from "@/lib/cover";
 import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import { COVER_TEMPLATES, type CoverTemplateId } from "@/lib/types";
 
+// 封面渲染涉及字体加载，放宽 serverless 上限（秒）
+export const maxDuration = 30;
+
 const bodySchema = z.object({
   template: z.enum(["solid", "gradient", "split"] as const),
   main: z.string().min(1, "请提供封面主标题").max(60),

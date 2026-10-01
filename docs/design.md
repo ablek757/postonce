@@ -95,7 +95,7 @@
 
 ## 7. 技术架构
 
-**栈**：Next.js 15（App Router）+ TypeScript + Tailwind + shadcn/ui，单体仓库，API Routes 做后端。
+**栈**：Next.js 16（App Router）+ TypeScript + Tailwind + shadcn/ui，单体仓库，API Routes 做后端。
 
 **关键选型**：
 

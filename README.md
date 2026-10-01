@@ -6,6 +6,16 @@
 
 **English summary**: PostOnce is an open-source AI content-repurposing agent. Paste text or drop a link, and it drafts platform-native posts (Xiaohongshu / WeChat Official Account) with title candidates, tags, covers and rich-text layout, using any OpenAI-compatible LLM (BYOK supported). Built with Next.js App Router + Vercel AI SDK + satori.
 
+## 演示
+
+| ① 输入（粘贴文本 / 网页链接） | ② AI 结构化理解（全字段可编辑） |
+| --- | --- |
+| ![输入](docs/images/01-input.png) | ![内容理解](docs/images/02-analysis.png) |
+
+| ③ 双平台草稿（逐平台编辑/重生成） | ④ 封面工作台（3 套模板秒出图） |
+| --- | --- |
+| ![平台草稿](docs/images/03-drafts.png) | ![封面](docs/images/04-cover.png) |
+
 ## 功能
 
 - **双通道输入**：粘贴文本，或输入网页链接由服务端抓取正文（桌面 UA + Readability 提取，带 SSRF 防护）

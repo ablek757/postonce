@@ -223,7 +223,10 @@ export function PostonceApp() {
           ready={doc !== null}
           busy={busy === "understand"}
           onReady={(d) => setDoc(d)}
-          onUnderstand={() => doc && runUnderstand(doc)}
+          onUnderstand={(d) => {
+            const target = d ?? doc;
+            if (target) runUnderstand(target);
+          }}
         />
 
         {globalError && (

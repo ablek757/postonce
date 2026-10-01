@@ -8,6 +8,9 @@ import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import { PLATFORM_IDS, type ContentAnalysis, type PlatformId, type PlatformResult } from "@/lib/types";
 import { friendlyLlmError } from "@/lib/llm-errors";
 
+// LLM 生成可能较慢，放宽 serverless 超时上限（秒）
+export const maxDuration = 60;
+
 const MAX_CONTENT_CHARS = 8000;
 
 const analysisSchema = z.object({

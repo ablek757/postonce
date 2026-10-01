@@ -5,6 +5,9 @@ import { Readability } from "@mozilla/readability";
 import { fetchWebPage, SsrfError } from "@/lib/ssrf";
 import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 
+// 抓取含 15s 超时，放宽 serverless 上限（秒）
+export const maxDuration = 30;
+
 const bodySchema = z.object({
   url: z.string().min(1, "请提供链接").max(2048),
 });

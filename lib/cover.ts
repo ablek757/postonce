@@ -63,8 +63,50 @@ const T = {
   span: "span",
 } as const;
 
+/** 估算文字宽度（CJK≈1em，ASCII≈0.55em），把主标题折成均衡的两行，避免孤字 */
+function splitMain(main: string, fontSize: number, maxWidth: number): string[] {
+  const chars = Array.from(main);
+  const units = chars.map((ch) => (/[^\x00-\xff]/.test(ch) ? 1 : 0.55));
+  const total = units.reduce((a, b) => a + b, 0);
+  const perLine = maxWidth / fontSize;
+  if (total <= perLine * 1.05) return [main];
+  let acc = 0;
+  let best = 1;
+  let bestDiff = Infinity;
+  for (let i = 0; i < chars.length - 1; i++) {
+    acc += units[i];
+    if (acc > perLine) break;
+    const d = Math.abs(acc - total / 2);
+    if (d < bestDiff) {
+      bestDiff = d;
+      best = i + 1;
+    }
+  }
+  return [chars.slice(0, best).join(""), chars.slice(best).join("")];
+}
+
+/** 主标题按行渲染（自动均衡折行） */
+function mainEls(
+  main: string,
+  fontSize: number,
+  maxWidth: number,
+  style: Record<string, unknown>
+) {
+  return splitMain(main, fontSize, maxWidth).map((line, i) =>
+    el(T.div, { key: i, style }, line)
+  );
+}
+
 /* ---------- 模板 1：纯色大字版 ---------- */
 function SolidTemplate(main: string, sub: string) {
+  const mainStyle = {
+    fontSize: 104,
+    fontWeight: 700,
+    color: "#ffffff",
+    lineHeight: 1.25,
+    letterSpacing: 2,
+    fontFamily: FONT_FAMILY,
+  };
   return el(
     T.div,
     {
@@ -89,20 +131,7 @@ function SolidTemplate(main: string, sub: string) {
         border: "3px solid rgba(255,255,255,0.55)",
       },
     }),
-    el(
-      T.div,
-      {
-        style: {
-          fontSize: 104,
-          fontWeight: 700,
-          color: "#ffffff",
-          lineHeight: 1.25,
-          letterSpacing: 2,
-          fontFamily: FONT_FAMILY,
-        },
-      },
-      main
-    ),
+    ...mainEls(main, 104, COVER_WIDTH - 180, mainStyle),
     el(T.div, {
       style: { width: 120, height: 10, backgroundColor: "#ffffff", marginTop: 48 },
     }),
@@ -125,6 +154,14 @@ function SolidTemplate(main: string, sub: string) {
 
 /* ---------- 模板 2：渐变版 ---------- */
 function GradientTemplate(main: string, sub: string) {
+  const mainStyle = {
+    fontSize: 108,
+    fontWeight: 700,
+    color: "#ffffff",
+    lineHeight: 1.25,
+    fontFamily: FONT_FAMILY,
+    textShadow: "0 6px 24px rgba(0,0,0,0.25)",
+  };
   return el(
     T.div,
     {
@@ -156,20 +193,7 @@ function GradientTemplate(main: string, sub: string) {
       },
       "精选干货"
     ),
-    el(
-      T.div,
-      {
-        style: {
-          fontSize: 108,
-          fontWeight: 700,
-          color: "#ffffff",
-          lineHeight: 1.25,
-          fontFamily: FONT_FAMILY,
-          textShadow: "0 6px 24px rgba(0,0,0,0.25)",
-        },
-      },
-      main
-    ),
+    ...mainEls(main, 108, COVER_WIDTH - 192, mainStyle),
     el(
       T.div,
       {
@@ -199,6 +223,13 @@ function GradientTemplate(main: string, sub: string) {
 
 /* ---------- 模板 3：左右分栏版 ---------- */
 function SplitTemplate(main: string, sub: string) {
+  const mainStyle = {
+    fontSize: 88,
+    fontWeight: 700,
+    color: "#1F2430",
+    lineHeight: 1.3,
+    fontFamily: FONT_FAMILY,
+  };
   return el(
     T.div,
     {
@@ -264,19 +295,7 @@ function SplitTemplate(main: string, sub: string) {
       el(T.div, {
         style: { width: 90, height: 12, backgroundColor: "#1F2430", marginBottom: 48 },
       }),
-      el(
-        T.div,
-        {
-          style: {
-            fontSize: 88,
-            fontWeight: 700,
-            color: "#1F2430",
-            lineHeight: 1.3,
-            fontFamily: FONT_FAMILY,
-          },
-        },
-        main
-      )
+      ...mainEls(main, 88, COVER_WIDTH - 330 - 128, mainStyle)
     )
   );
 }

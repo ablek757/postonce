@@ -14,7 +14,7 @@ import { FileText, Link2, Loader2, Sparkles } from "lucide-react";
 interface Props {
   initialDoc?: SourceDocument | null;
   onReady: (doc: SourceDocument) => void;
-  onUnderstand: () => void;
+  onUnderstand: (doc?: SourceDocument) => void;
   ready: boolean;
   busy: boolean;
 }
@@ -107,7 +107,11 @@ export function SourceInput({ initialDoc, onReady, onUnderstand, ready, busy }: 
             <Button
               className="w-full sm:w-auto"
               disabled={!textReady || busy}
-              onClick={() => onReady({ title, content, excerpt: "" })}
+              onClick={() => {
+                const d = { title, content, excerpt: "" };
+                onReady(d);
+                onUnderstand(d);
+              }}
             >
               {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}
               开始理解
