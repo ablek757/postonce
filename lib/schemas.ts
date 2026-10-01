@@ -43,7 +43,51 @@ export const gongzhonghaoDraftSchema = z.object({
   digest: z.string().describe("文章摘要，120 字以内，用于公众号后台 digest 字段"),
 });
 
+/** 知乎草稿 schema */
+export const zhihuDraftSchema = z.object({
+  titles: z
+    .array(z.string())
+    .min(3)
+    .max(8)
+    .describe("3-8 个备选标题，问题式或观点式，每个不超过 30 字"),
+  body: z
+    .string()
+    .describe("Markdown 格式正文，2000 字以内，小标题+列表+加粗，逻辑论证感，回答体"),
+});
+
+/** 微博草稿 schema */
+export const weiboDraftSchema = z.object({
+  text: z
+    .string()
+    .describe("140 字以内短文案，前 20 字必须有钩子，带 1-2 个 emoji"),
+  topics: z
+    .array(z.string())
+    .min(2)
+    .max(4)
+    .describe("2-4 个话题词，不带 # 号"),
+  longText: z
+    .string()
+    .max(500)
+    .optional()
+    .describe("可选长微博版本，500 字以内，不需要时输出空字符串"),
+});
+
+/** 头条草稿 schema */
+export const toutiaoDraftSchema = z.object({
+  titles: z
+    .array(z.string())
+    .min(3)
+    .max(8)
+    .describe("3-8 个备选标题，信息量型，每个不超过 30 字"),
+  body: z
+    .string()
+    .describe("资讯感正文，1500 字以内，段落清晰，信息密度高"),
+});
+
 export const platformDraftSchemas = {
   xiaohongshu: xiaohongshuDraftSchema,
   gongzhonghao: gongzhonghaoDraftSchema,
+  zhihu: zhihuDraftSchema,
+  weibo: weiboDraftSchema,
+  toutiao: toutiaoDraftSchema,
 } as const;

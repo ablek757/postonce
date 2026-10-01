@@ -11,6 +11,7 @@ import { GongzhonghaoPanel } from "@/components/gongzhonghao-panel";
 import { HistorySheet } from "@/components/history-sheet";
 import { SettingsSheet, type ServerInfo } from "@/components/settings-sheet";
 import { SourceInput } from "@/components/source-input";
+import { TextPlatformPanel } from "@/components/text-platform-panel";
 import { XiaohongshuPanel } from "@/components/xiaohongshu-panel";
 import {
   apiPost,
@@ -29,21 +30,27 @@ import {
   PLATFORM_LABELS,
   type ContentAnalysis,
   type GongzhonghaoDraft,
+  type PlatformDraft,
   type PlatformId,
   type SourceDocument,
   type TokenUsage,
+  type ToutiaoDraft,
+  type WeiboDraft,
   type XiaohongshuDraft,
+  type ZhihuDraft,
 } from "@/lib/types";
 import { AlertCircle, Coins, History, Loader2, RefreshCw, Settings2 } from "lucide-react";
 
 interface DraftState {
   status: "loading" | "ok" | "error";
-  data?: XiaohongshuDraft | GongzhonghaoDraft;
+  data?: PlatformDraft;
   error?: string;
   usage?: TokenUsage;
 }
 
 const EMPTY_USAGE: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+
+const TEXT_PLATFORMS: PlatformId[] = ["zhihu", "weibo", "toutiao"];
 
 export function PostonceApp() {
   const [doc, setDoc] = useState<SourceDocument | null>(null);
@@ -52,7 +59,11 @@ export function PostonceApp() {
   const [titleSelected, setTitleSelected] = useState<Record<PlatformId, number>>({
     xiaohongshu: 0,
     gongzhonghao: 0,
+    zhihu: 0,
+    weibo: 0,
+    toutiao: 0,
   });
+  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([...PLATFORM_IDS]);
   const [busy, setBusy] = useState<"understand" | "adapt" | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [usageTotal, setUsageTotal] = useState<TokenUsage>(EMPTY_USAGE);
@@ -126,18 +137,36 @@ export function PostonceApp() {
         }
         setDrafts((prev) => ({ ...prev, ...next }));
 
-        // 完整生成（双平台）成功时写入历史
-        const allOk = res.results.every((r) => r.ok);
-        if (allOk && platforms.length === PLATFORM_IDS.length) {
-          saveHistoryRun({
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            time: Date.now(),
-            title: doc.title || analysis.summary.slice(0, 30),
-            sourceUrl: doc.sourceUrl,
-            doc,
-            analysis,
-            results: res.results,
-          });
+        // 只要有平台成功就存历史：与本次请求前已有的成功结果合并，避免单独重试时丢其他平台
+        const okResults = res.results.filter((r) => r.ok);
+        if (okResults.length > 0) {
+          const merged = new Map<PlatformId, (typeof res.results)[number]>();
+          for (const p of PLATFORM_IDS) {
+            const st = drafts[p];
+            if (st?.status === "ok" && st.data) {
+              merged.set(p, {
+                platform: p,
+                ok: true,
+                data: st.data,
+                usage: st.usage,
+              });
+            }
+          }
+          for (const r of okResults) merged.set(r.platform, r);
+          const results = PLATFORM_IDS.map((p) => merged.get(p)).filter(
+            (r): r is (typeof res.results)[number] => Boolean(r)
+          );
+          if (results.length > 0) {
+            saveHistoryRun({
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              time: Date.now(),
+              title: doc.title || analysis.summary.slice(0, 30),
+              sourceUrl: doc.sourceUrl,
+              doc,
+              analysis,
+              results,
+            });
+          }
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "生成失败";
@@ -153,8 +182,14 @@ export function PostonceApp() {
         setBusy(null);
       }
     },
-    [doc, analysis, addUsage]
+    [doc, analysis, drafts, addUsage]
   );
+
+  function togglePlatform(p: PlatformId) {
+    setSelectedPlatforms((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
+  }
 
   function openHistory() {
     setHistoryRuns(loadHistory());
@@ -171,7 +206,7 @@ export function PostonceApp() {
       }
     }
     setDrafts(next);
-    setTitleSelected({ xiaohongshu: 0, gongzhonghao: 0 });
+    setTitleSelected(Object.fromEntries(PLATFORM_IDS.map((p) => [p, 0])) as Record<PlatformId, number>);
     setGlobalError(null);
     setHistoryOpen(false);
     window.scrollTo({ top: 0 });
@@ -246,7 +281,9 @@ export function PostonceApp() {
             busyLabel={busy === "adapt" ? "正在生成草稿…" : undefined}
             onChange={setAnalysis}
             onRegenerate={() => doc && runUnderstand(doc)}
-            onAdapt={() => runAdapt(PLATFORM_IDS)}
+            onAdapt={() => runAdapt(selectedPlatforms)}
+            selectedPlatforms={selectedPlatforms}
+            onTogglePlatform={togglePlatform}
           />
         )}
 
@@ -320,6 +357,23 @@ export function PostonceApp() {
                         }
                       />
                     )}
+                    {state.status === "ok" &&
+                      state.data &&
+                      TEXT_PLATFORMS.includes(platform) && (
+                        <TextPlatformPanel
+                          platform={platform}
+                          draft={
+                            state.data as ZhihuDraft | WeiboDraft | ToutiaoDraft
+                          }
+                          selectedTitle={titleSelected[platform]}
+                          onSelectTitle={(i) =>
+                            setTitleSelected((s) => ({ ...s, [platform]: i }))
+                          }
+                          onChange={(d) =>
+                            setDrafts((prev) => ({ ...prev, [platform]: { ...state, data: d } }))
+                          }
+                        />
+                      )}
                   </CardContent>
                 </Card>
               );

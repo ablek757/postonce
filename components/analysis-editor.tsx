@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import type { ContentAnalysis } from "@/lib/types";
+import type { ContentAnalysis, PlatformId } from "@/lib/types";
+import { PLATFORM_IDS, PLATFORM_LABELS } from "@/lib/types";
 import { Lightbulb, Loader2, Plus, RefreshCw, Send, X } from "lucide-react";
 
 interface Props {
@@ -16,9 +17,20 @@ interface Props {
   onAdapt: () => void;
   busy: boolean;
   busyLabel?: string;
+  selectedPlatforms: PlatformId[];
+  onTogglePlatform: (p: PlatformId) => void;
 }
 
-export function AnalysisEditor({ analysis, onChange, onRegenerate, onAdapt, busy, busyLabel }: Props) {
+export function AnalysisEditor({
+  analysis,
+  onChange,
+  onRegenerate,
+  onAdapt,
+  busy,
+  busyLabel,
+  selectedPlatforms,
+  onTogglePlatform,
+}: Props) {
   function set<K extends keyof ContentAnalysis>(key: K, value: ContentAnalysis[K]) {
     onChange({ ...analysis, [key]: value });
   }
@@ -115,14 +127,31 @@ export function AnalysisEditor({ analysis, onChange, onRegenerate, onAdapt, busy
           </Button>
         </div>
 
+        <div className="space-y-2">
+          <Label>生成平台（可多选）</Label>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {PLATFORM_IDS.map((p) => (
+              <label key={p} className="flex cursor-pointer items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  checked={selectedPlatforms.includes(p)}
+                  onChange={() => onTogglePlatform(p)}
+                />
+                {PLATFORM_LABELS[p]}
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" onClick={onRegenerate} disabled={busy}>
             {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <RefreshCw className="mr-2 size-4" />}
             重新理解
           </Button>
-          <Button onClick={onAdapt} disabled={busy}>
+          <Button onClick={onAdapt} disabled={busy || selectedPlatforms.length === 0}>
             {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Send className="mr-2 size-4" />}
-            {busy ? (busyLabel ?? "生成中…") : "生成平台草稿"}
+            {busy ? (busyLabel ?? "生成中…") : `生成草稿（${selectedPlatforms.length} 个平台）`}
           </Button>
         </div>
 

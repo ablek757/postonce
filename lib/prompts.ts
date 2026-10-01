@@ -49,15 +49,64 @@ const GONGZHONGHAO_SPEC = `【公众号平台规格】
   "digest": "摘要"
 }`;
 
+const ZHIHU_SPEC = `【知乎平台规格】
+- titles：3-8 个备选标题，问题式（如"为什么……？"）或观点式（如"……才是正解"），每个不超过 30 字，专业克制，不标题党；
+- body：Markdown 格式正文（用 ## 小标题、- 无序列表、**加粗** 组织），2000 字以内；
+- 写法按"回答体"组织：开头直接亮明核心结论或立场 → 分点展开论证（论点+论据+例子）→ 结尾一句总结升华；
+- 整体逻辑性强、信息密度高、有专业感，避免营销腔和 emoji 堆砌，可适度引用原文金句并加粗。
+
+【输出格式】必须输出一个 json object，严格使用以下字段名，不得自造字段：
+{
+  "titles": ["标题1", "标题2", "标题3"],
+  "body": "Markdown 正文（## 小标题分段，- 列表，**加粗** 关键句）"
+}`;
+
+const WEIBO_SPEC = `【微博平台规格】
+- text：140 字以内短文案，前 20 字必须抛出钩子（结论/冲突/数字），带 1-2 个 emoji 点缀，口语化、有情绪，像真人发博；
+- topics：2-4 个话题词，不带 # 号，选与内容强相关、有流量的词；
+- longText：可选长微博版本，500 字以内，把核心内容讲完整（适合头条文章机制）；如内容确实不需要长文，输出空字符串 ""。
+
+【输出格式】必须输出一个 json object，严格使用以下字段名，不得自造字段：
+{
+  "text": "140 字内短文案（1-2 个 emoji，不带话题词）",
+  "topics": ["话题1", "话题2"],
+  "longText": "可选长微博版本，不需要时为空字符串"
+}`;
+
+const TOUTIAO_SPEC = `【头条平台规格】
+- titles：3-8 个备选标题，信息量型，突出关键事实/数字/利益点，每个不超过 30 字，平实有力不夸张；
+- body：资讯感正文，1500 字以内，段落清晰（每段 2-4 行），导语一段概括核心信息，随后分层展开事实与观点，可小标题分段，结尾一句总结或互动引导；语言客观稳健、信息密度高，避免小红书式 emoji 和网络腔。
+
+【输出格式】必须输出一个 json object，严格使用以下字段名，不得自造字段：
+{
+  "titles": ["标题1", "标题2", "标题3"],
+  "body": "资讯感正文（段落清晰，导语+分层展开）"
+}`;
+
+const PLATFORM_SPECS: Record<PlatformId, string> = {
+  xiaohongshu: XIAOHONGSHU_SPEC,
+  gongzhonghao: GONGZHONGHAO_SPEC,
+  zhihu: ZHIHU_SPEC,
+  weibo: WEIBO_SPEC,
+  toutiao: TOUTIAO_SPEC,
+};
+
+const PLATFORM_NAMES: Record<PlatformId, string> = {
+  xiaohongshu: "小红书",
+  gongzhonghao: "公众号",
+  zhihu: "知乎",
+  weibo: "微博",
+  toutiao: "头条",
+};
+
 export function buildAdaptPrompt(
   platform: PlatformId,
   title: string,
   content: string,
   analysis: ContentAnalysis
 ): string {
-  const spec =
-    platform === "xiaohongshu" ? XIAOHONGSHU_SPEC : GONGZHONGHAO_SPEC;
-  const platformName = platform === "xiaohongshu" ? "小红书" : "公众号";
+  const spec = PLATFORM_SPECS[platform];
+  const platformName = PLATFORM_NAMES[platform];
 
   return `你是一名顶级${platformName}内容创作者。请基于原始内容与内容理解结果，产出一篇严格符合平台调性的发布级草稿。
 

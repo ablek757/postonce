@@ -1,12 +1,26 @@
 // 前后端共享的类型定义
 
-export type PlatformId = "xiaohongshu" | "gongzhonghao";
+export type PlatformId =
+  | "xiaohongshu"
+  | "gongzhonghao"
+  | "zhihu"
+  | "weibo"
+  | "toutiao";
 
-export const PLATFORM_IDS: PlatformId[] = ["xiaohongshu", "gongzhonghao"];
+export const PLATFORM_IDS: PlatformId[] = [
+  "xiaohongshu",
+  "gongzhonghao",
+  "zhihu",
+  "weibo",
+  "toutiao",
+];
 
 export const PLATFORM_LABELS: Record<PlatformId, string> = {
   xiaohongshu: "小红书",
   gongzhonghao: "公众号",
+  zhihu: "知乎",
+  weibo: "微博",
+  toutiao: "头条",
 };
 
 /** 内容理解结果（/api/understand 输出，前端可编辑） */
@@ -38,7 +52,31 @@ export interface GongzhonghaoDraft {
   digest: string;
 }
 
-export type PlatformDraft = XiaohongshuDraft | GongzhonghaoDraft;
+/** 知乎草稿（Markdown 正文，回答体） */
+export interface ZhihuDraft {
+  titles: string[];
+  body: string;
+}
+
+/** 微博草稿（短文案 + 话题 + 可选长文） */
+export interface WeiboDraft {
+  text: string;
+  topics: string[];
+  longText?: string;
+}
+
+/** 头条草稿（资讯感正文） */
+export interface ToutiaoDraft {
+  titles: string[];
+  body: string;
+}
+
+export type PlatformDraft =
+  | XiaohongshuDraft
+  | GongzhonghaoDraft
+  | ZhihuDraft
+  | WeiboDraft
+  | ToutiaoDraft;
 
 export interface PlatformResult<T = PlatformDraft> {
   platform: PlatformId;

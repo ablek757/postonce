@@ -26,9 +26,17 @@ const bodySchema = z.object({
   content: z.string().min(1, "请提供正文内容").max(20000),
   analysis: analysisSchema,
   platforms: z
-    .array(z.enum(["xiaohongshu", "gongzhonghao"] as const))
+    .array(
+      z.enum([
+        "xiaohongshu",
+        "gongzhonghao",
+        "zhihu",
+        "weibo",
+        "toutiao",
+      ] as const)
+    )
     .min(1, "请至少选择一个平台")
-    .max(2),
+    .max(5),
 });
 
 export async function POST(req: Request) {
