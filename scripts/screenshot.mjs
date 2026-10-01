@@ -36,14 +36,14 @@ console.log("✓ 01-input");
 await page.fill("#src-title", "我为什么放弃了收藏 AI 工具，改用一条流水线");
 await page.fill("#src-content", article);
 await page.getByRole("button", { name: "开始理解" }).click();
-await page.getByRole("button", { name: "生成平台草稿" }).waitFor({ timeout: 90000 });
+await page.getByRole("button", { name: /生成草稿/ }).waitFor({ timeout: 90000 });
 await page.getByText("所有字段都可以手动修改").scrollIntoViewIfNeeded();
 await page.waitForTimeout(800);
 await page.screenshot({ path: path.join(outDir, "02-analysis.png") });
 console.log("✓ 02-analysis");
 
-// ② 生成双平台草稿
-await page.getByRole("button", { name: "生成平台草稿" }).click();
+// ② 生成平台草稿（M3 起按钮文案为「生成草稿（N 个平台）」）
+await page.getByRole("button", { name: /生成草稿/ }).click();
 await page.getByText("③ 平台草稿", { exact: false }).waitFor({ timeout: 120000 });
 await page.waitForFunction(() => !document.querySelector(".animate-spin"), { timeout: 120000 });
 await page.waitForTimeout(1500);
