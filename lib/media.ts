@@ -41,6 +41,14 @@ export function resolveFfmpegPath(): string {
   } catch {
     /* 未安装则走手动兜底 */
   }
+  // 兜底：Turbopack 下 require 可能失效，按项目根目录约定路径直接探测
+  const cwdFallback = path.join(
+    process.cwd(),
+    "node_modules",
+    "ffmpeg-static",
+    process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg"
+  );
+  if (fs.existsSync(cwdFallback)) return (cachedFfmpeg = cwdFallback);
   throw new Error("未找到 ffmpeg 二进制：请确认 ffmpeg-static 安装成功，或手动放置 ffmpeg 到 assets/bin/（见 README）");
 }
 
@@ -60,6 +68,11 @@ export function resolveYtdlpPath(): string {
     }
   } catch {
     /* 未安装则走手动兜底 */
+  }
+  // 兜底：Turbopack 下 require.resolve 可能失效，按项目根目录约定路径直接探测
+  for (const name of process.platform === "win32" ? ["yt-dlp.exe", "yt-dlp"] : ["yt-dlp", "yt-dlp.exe"]) {
+    const p = path.join(process.cwd(), "node_modules", "yt-dlp-exec", "bin", name);
+    if (fs.existsSync(p)) return (cachedYtdlp = p);
   }
   throw new Error("未找到 yt-dlp 二进制：请确认 yt-dlp-exec 安装成功，或手动下载 yt-dlp 到 assets/bin/（见 README）");
 }
