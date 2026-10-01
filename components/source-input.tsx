@@ -166,7 +166,7 @@ export function SourceInput({ initialDoc, onReady, onUnderstand, ready, busy }: 
                   />
                   <p className="text-xs text-muted-foreground text-right">{content.length} 字</p>
                 </div>
-                <Button className="w-full sm:w-auto" disabled={!textReady || busy} onClick={onUnderstand}>
+                <Button className="w-full sm:w-auto" disabled={!textReady || busy} onClick={() => onUnderstand()}>
                   {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}
                   开始理解
                 </Button>
