@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       system: UNDERSTAND_SYSTEM,
       prompt: buildUnderstandPrompt(parsed.data.title, content),
       temperature: 0.3,
+      maxOutputTokens: 4000,
     });
 
     return NextResponse.json({

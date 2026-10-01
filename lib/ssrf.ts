@@ -123,53 +123,65 @@ export async function fetchWebPage(
     } catch (err) {
       clearTimeout(timer);
       if (err instanceof SsrfError) throw err;
+      if (controller.signal.aborted) {
+        throw new Error("网页抓取失败：目标站点响应超时");
+      }
       throw new Error("网页抓取失败：无法连接到目标站点");
     }
-    clearTimeout(timer);
 
-    if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get("location");
-      res.headers.get("set-cookie"); // 消费响应，避免连接复用挂起
-      await res.arrayBuffer().catch(() => undefined);
-      if (!location) throw new Error("网页抓取失败：重定向地址缺失");
-      const next = new URL(location, url).toString();
-      url = (await assertUrlAllowed(next)).toString();
-      continue;
-    }
+    // timer 保持存活直至响应体读完，覆盖"header 快、body 慢"的挂死场景
+    try {
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get("location");
+        res.headers.get("set-cookie"); // 消费响应，避免连接复用挂起
+        await res.arrayBuffer().catch(() => undefined);
+        if (!location) throw new Error("网页抓取失败：重定向地址缺失");
+        const next = new URL(location, url).toString();
+        url = (await assertUrlAllowed(next)).toString();
+        continue;
+      }
 
-    if (!res.ok) {
-      throw new Error(`网页抓取失败：目标站点返回 ${res.status}`);
-    }
+      if (!res.ok) {
+        throw new Error(`网页抓取失败：目标站点返回 ${res.status}`);
+      }
 
-    const contentType = res.headers.get("content-type") || "";
-    if (contentType && !/text\/html|application\/xhtml/i.test(contentType)) {
-      throw new Error("目标链接不是网页（Content-Type 不是 HTML）");
-    }
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType && !/text\/html|application\/xhtml/i.test(contentType)) {
+        throw new Error("目标链接不是网页（Content-Type 不是 HTML）");
+      }
 
-    // 限制读取体积
-    const reader = res.body?.getReader();
-    if (!reader) throw new Error("网页抓取失败：响应为空");
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > MAX_BODY_BYTES) break;
-      chunks.push(value);
+      // 限制读取体积
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("网页抓取失败：响应为空");
+      const chunks: Uint8Array[] = [];
+      let total = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > MAX_BODY_BYTES) break;
+        chunks.push(value);
+      }
+      const merged = new Uint8Array(Math.min(total, MAX_BODY_BYTES));
+      let offset = 0;
+      for (const c of chunks) {
+        merged.set(c.subarray(0, merged.length - offset), offset);
+        offset += Math.min(c.byteLength, merged.length - offset);
+        if (offset >= merged.length) break;
+      }
+      const charset = /charset=([\w-]+)/i.exec(contentType)?.[1];
+      return {
+        html: new TextDecoder(charset || "utf-8").decode(merged),
+        finalUrl: url,
+      };
+    } catch (err) {
+      if (controller.signal.aborted) {
+        throw new Error("网页抓取失败：目标站点响应超时");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
     }
-    const merged = new Uint8Array(Math.min(total, MAX_BODY_BYTES));
-    let offset = 0;
-    for (const c of chunks) {
-      merged.set(c.subarray(0, merged.length - offset), offset);
-      offset += Math.min(c.byteLength, merged.length - offset);
-      if (offset >= merged.length) break;
-    }
-    const charset = /charset=([\w-]+)/i.exec(contentType)?.[1];
-    return {
-      html: new TextDecoder(charset || "utf-8").decode(merged),
-      finalUrl: url,
-    };
   }
 
   throw new Error("网页抓取失败：重定向次数过多");

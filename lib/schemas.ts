@@ -13,7 +13,7 @@ export const understandingSchema = z.object({
 export const xiaohongshuDraftSchema = z.object({
   titles: z
     .array(z.string())
-    .length(5)
+    .min(3).max(8)
     .describe("5 个备选标题，每个不超过 20 字，强情绪/数字/悬念风格"),
   body: z.string().describe("正文，800 字以内，短段落 + emoji 分隔，口语化"),
   tags: z
@@ -33,7 +33,7 @@ export const xiaohongshuDraftSchema = z.object({
 export const gongzhonghaoDraftSchema = z.object({
   titles: z
     .array(z.string())
-    .length(5)
+    .min(3).max(8)
     .describe("5 个备选标题，每个不超过 22 字，悬念/观点型"),
   html: z
     .string()

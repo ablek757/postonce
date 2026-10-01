@@ -81,6 +81,7 @@ export async function POST(req: Request) {
         schema: platformDraftSchemas[platform],
         prompt: buildAdaptPrompt(platform, title, content, analysis as ContentAnalysis),
         temperature: 0.7,
+        maxOutputTokens: 8000,
       });
       return {
         platform,
