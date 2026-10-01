@@ -6,7 +6,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { buildAdaptPrompt } from "../lib/prompts.ts";
-import { xiaohongshuDraftSchema } from "../lib/schemas.ts";
+import { platformDraftSchemas } from "../lib/schemas.ts";
+
+const platform = process.argv[2] || "xiaohongshu";
 
 const content = fs.readFileSync(
   path.join(os.tmpdir(), "postonce-e2e", "article.txt"),
@@ -29,8 +31,8 @@ const provider = createOpenAICompatible({
 try {
   const r = await generateObject({
     model: provider.chatModel("deepseek-chat"),
-    schema: xiaohongshuDraftSchema,
-    prompt: buildAdaptPrompt("xiaohongshu", "我为什么放弃了收藏 AI 工具，改用一条流水线", content, analysis),
+    schema: platformDraftSchemas[platform],
+    prompt: buildAdaptPrompt(platform, "我为什么放弃了收藏 AI 工具，改用一条流水线", content, analysis),
     temperature: 0.7,
     maxOutputTokens: 8000,
   });

@@ -63,11 +63,10 @@ export const weiboDraftSchema = z.object({
   topics: z
     .array(z.string())
     .min(2)
-    .max(4)
+    .max(8)
     .describe("2-4 个话题词，不带 # 号"),
   longText: z
     .string()
-    .max(500)
     .optional()
     .describe("可选长微博版本，500 字以内，不需要时输出空字符串"),
 });
