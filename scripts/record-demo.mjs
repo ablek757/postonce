@@ -59,7 +59,7 @@ for (let y = 0; y <= 4; y++) {
 
 // ④ 封面
 try {
-  const btn = page.getByRole("button", { name: "生成封面" });
+  const btn = page.getByRole("button", { name: /一键生成/ });
   await btn.scrollIntoViewIfNeeded();
   await page.waitForTimeout(600);
   await btn.click();

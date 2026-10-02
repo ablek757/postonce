@@ -52,7 +52,7 @@ console.log("✓ 03-drafts");
 
 // ③ 封面工作台（尽力而为，失败不阻塞）
 try {
-  const btn = page.getByRole("button", { name: "生成封面" });
+  const btn = page.getByRole("button", { name: /一键生成/ });
   await btn.scrollIntoViewIfNeeded();
   await btn.click();
   await page.waitForTimeout(4000);
