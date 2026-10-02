@@ -38,12 +38,14 @@ export function TitleCandidates({ titles, selected, onSelect, onEdit }: Props) {
               <Input
                 value={t}
                 onChange={(e) => onEdit(i, e.target.value)}
-                className={`h-8 border-transparent bg-transparent px-1 shadow-none focus-visible:border-input ${
+                className={`h-8 min-w-0 border-transparent bg-transparent px-1 shadow-none focus-visible:border-input ${
                   active ? "font-medium" : "text-muted-foreground"
                 }`}
                 aria-label={`标题候选 ${i + 1}`}
               />
-              {active && <Badge className="shrink-0">当前</Badge>}
+              {active && (
+                <Badge className="hidden shrink-0 sm:inline-flex">当前</Badge>
+              )}
             </div>
           );
         })}

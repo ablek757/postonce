@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnalysisEditor } from "@/components/analysis-editor";
+import { EmptyState } from "@/components/empty-state";
 import { GongzhonghaoPanel } from "@/components/gongzhonghao-panel";
 import { HistorySheet } from "@/components/history-sheet";
 import { SettingsSheet, type ServerInfo } from "@/components/settings-sheet";
@@ -39,7 +40,16 @@ import {
   type XiaohongshuDraft,
   type ZhihuDraft,
 } from "@/lib/types";
-import { AlertCircle, Coins, History, Loader2, RefreshCw, Settings2 } from "lucide-react";
+import { AlertCircle, Coins, History, Loader2, RotateCcw, Send, Settings2, Star } from "lucide-react";
+
+const ADAPT_HINTS = [
+  "正在琢磨小红书标题…",
+  "公众号排版中…",
+  "知乎论证结构梳理中…",
+  "微博短文案打磨中…",
+  "头条资讯稿撰写中…",
+  "就快好了，正在逐平台自检…",
+];
 
 interface DraftState {
   status: "loading" | "ok" | "error";
@@ -217,13 +227,38 @@ export function PostonceApp() {
     [drafts]
   );
 
+  const anyLoading = useMemo(
+    () => PLATFORM_IDS.some((p) => drafts[p]?.status === "loading"),
+    [drafts]
+  );
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!anyLoading) {
+      setElapsed(0);
+      return;
+    }
+    const t0 = Date.now();
+    setElapsed(0);
+    const timer = setInterval(
+      () => setElapsed(Math.floor((Date.now() - t0) / 1000)),
+      1000
+    );
+    return () => clearInterval(timer);
+  }, [anyLoading]);
+  const adaptHint = ADAPT_HINTS[Math.floor(elapsed / 3) % ADAPT_HINTS.length];
+
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4">
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-bold">
-              PostOnce <span className="text-muted-foreground font-normal">一稿多发</span>
+            <h1 className="flex items-center gap-2 truncate text-base font-bold">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                <Send className="size-3.5" aria-hidden />
+              </span>
+              <span className="truncate">
+                PostOnce <span className="text-muted-foreground font-normal">一稿多发</span>
+              </span>
             </h1>
             <p className="hidden text-xs text-muted-foreground sm:block">
               Write once, publish everywhere. 写一次，发全网。
@@ -274,6 +309,8 @@ export function PostonceApp() {
           </div>
         )}
 
+        {!analysis && <EmptyState />}
+
         {analysis && (
           <AnalysisEditor
             analysis={analysis}
@@ -293,6 +330,15 @@ export function PostonceApp() {
             <h2 className="text-sm font-semibold text-muted-foreground">
               ③ 平台草稿（逐平台可编辑、可单独重新生成）
             </h2>
+            {anyLoading && (
+              <div className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
+                <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                <span>{adaptHint}</span>
+                <span className="ml-auto shrink-0 text-xs tabular-nums">
+                  已用时 {elapsed}s
+                </span>
+              </div>
+            )}
             {PLATFORM_IDS.map((platform) => {
               const state = drafts[platform];
               if (!state) return null;
@@ -309,15 +355,25 @@ export function PostonceApp() {
                       {state.status === "loading" && (
                         <Loader2 className="size-4 animate-spin text-muted-foreground" />
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={busy !== null || state.status === "loading"}
-                        onClick={() => runAdapt([platform])}
-                      >
-                        <RefreshCw className="mr-1.5 size-3.5" />
-                        重新生成
-                      </Button>
+                      {state.status === "error" ? (
+                        <Button
+                          size="sm"
+                          onClick={() => runAdapt([platform])}
+                          disabled={busy !== null}
+                        >
+                          <RotateCcw className="mr-1.5 size-3.5" />
+                          重试该平台
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={busy !== null || state.status === "loading"}
+                          onClick={() => runAdapt([platform])}
+                        >
+                          重新生成
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -386,6 +442,20 @@ export function PostonceApp() {
         <p className="mx-auto max-w-3xl px-4 text-center text-xs text-muted-foreground">
           PostOnce 只产出草稿、不碰自动发布。请人工审核后再发布，并遵守各平台
           「AI 辅助创作」标识要求；网页抓取内容仅供你本人二次创作，请尊重原作者版权。
+        </p>
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          {/* 发布前替换为真实仓库地址 */}
+          <a
+            href="https://github.com/yourname/PostOnce"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+          >
+            <Star className="size-3.5" aria-hidden />
+            GitHub
+          </a>
+          <span aria-hidden>·</span>
+          <span>Apache-2.0</span>
         </p>
       </footer>
 
