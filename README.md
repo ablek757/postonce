@@ -11,7 +11,7 @@
 
 **English**: PostOnce is an open-source AI content-repurposing agent. Feed it text, a URL, or a video/podcast link, and it drafts platform-native posts for Xiaohongshu, WeChat Official Accounts, Zhihu, Weibo and Toutiao — titles, body, tags, covers and rich-text layout, with pluggable OpenAI-compatible LLMs (BYOK supported). Built with Next.js App Router + Vercel AI SDK + satori + yt-dlp.
 
-![PostOnce 演示：输入 → AI 理解 → 五平台草稿 → 封面](docs/images/demo.gif)
+![PostOnce 演示：输入 → AI 理解 → 五平台草稿 → 封面](assets/images/demo.gif)
 
 ## 为什么做它
 
@@ -21,11 +21,11 @@
 
 | ① 输入（文本 / 链接 / 视频） | ② AI 结构化理解（全字段可编辑） |
 | --- | --- |
-| ![输入](docs/images/01-input.png) | ![内容理解](docs/images/02-analysis.png) |
+| ![输入](assets/images/01-input.png) | ![内容理解](assets/images/02-analysis.png) |
 
 | ③ 五平台草稿（逐平台编辑/重生成） | ④ 封面工作台（一键三模板） |
 | --- | --- |
-| ![平台草稿](docs/images/03-drafts.png) | ![封面](docs/images/04-cover.png) |
+| ![平台草稿](assets/images/03-drafts.png) | ![封面工作台](assets/images/04-cover.png) |
 
 ## 功能
 
@@ -118,19 +118,6 @@ DASHSCOPE_API_KEY=你的百炼密钥   # ASR 转写与通义文本模型共用�
 实现要点：DashScope 兼容模式的 ASR 仅支持 qwen3-asr-flash 系列且不收本地文件路径，本项目按其官方文档用 base64 Data URL 上传，单片超 4 分钟自动切片；groq/openai 预设走标准 Whisper multipart 上传。
 
 **二进制依赖**：`ffmpeg-static` 与 `yt-dlp-exec` 在 npm install 时自动下载二进制（GitHub Releases）。网络受限时可用镜像重装：`FFMPEG_BINARIES_URL=https://registry.npmmirror.com/-/binary/ffmpeg-static npm install ffmpeg-static`；yt-dlp 可经 `https://ghfast.top/https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe` 手动下载到 `node_modules/yt-dlp-exec/bin/`。若都失败，手动放置 `ffmpeg(.exe)`、`yt-dlp(.exe)` 到 `assets/bin/` 即可。
-
-## 文档
-
-- [docs/design.md](docs/design.md)：产品设计与技术方案（定位、设计原则、平台规格、架构选型）
-- [docs/research/](docs/research/)：立项前的四份调研报告——小红书/公众号传播规律、GitHub Agent 开源生态、创作者痛点、国内外竞品格局。**想自己做 AI 产品的，这是一份避坑指南**
-
-## Roadmap
-
-- **M1** 核心链路：文本/链接输入 → 内容理解 → 小红书 + 公众号草稿 → 模板封面 ✅
-- **M2** 五平台适配（+知乎/微博/头条）+ BYOK + 限流 + 演示 GIF ✅
-- **M3** 视频/播客输入：B 站 / YouTube / 直链 → ASR 转写 → 流水线 ✅
-- **M4** 在线 Demo（Vercel）+ Docker 一键自托管 📋（代码已就绪，见各路由 `maxDuration`）
-- **M5** 选题雷达模块 / AI 生图封面（可选增强）📋
 
 ## 合规与声明
 
