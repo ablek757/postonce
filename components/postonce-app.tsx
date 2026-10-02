@@ -446,7 +446,7 @@ export function PostonceApp() {
         <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           {/* 发布前替换为真实仓库地址 */}
           <a
-            href="https://github.com/yourname/PostOnce"
+            href="https://github.com/ablek757/postonce"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
